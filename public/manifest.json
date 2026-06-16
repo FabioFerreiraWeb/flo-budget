@@ -1,0 +1,20 @@
+{
+  "name": "Flo",
+  "short_name": "Flo",
+  "description": "Gérez vos dépenses et atteignez vos objectifs d'épargne.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

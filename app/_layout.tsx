@@ -1,56 +1,81 @@
-import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { Stack } from 'expo-router';
+import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform, View } from 'react-native';
 import 'react-native-reanimated';
+import { AppProvider } from '../context/AppContext';
 
-import { useColorScheme } from '@/components/useColorScheme';
-
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
+function AppStack() {
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="modals/add-expense" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="modals/add-goal" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="modals/allocate-goal" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="modals/new-month" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="modals/month-recap" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="modals/customize-month" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="modals/manage-goals" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="settings" options={{ presentation: 'modal', headerShown: false }} />
+    </Stack>
+  );
 }
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('SW registration failed:', error);
+          });
+      });
+    }
+  }, []);
+
+  if (Platform.OS === 'web') {
+    return (
+      <AppProvider>
+        <Head>
+          <title>Flo — Gestion de budget</title>
+          <meta name="description" content="Gérez vos dépenses et atteignez vos objectifs d'épargne." />
+          <link rel="manifest" href="/manifest.json" />
+          <meta name="theme-color" content="#4F46E5" />
+          <link rel="apple-touch-icon" href="/icon.png" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+          <meta name="apple-mobile-web-app-title" content="Flo" />
+        </Head>
+        <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#F8FAFC' }}>
+          <View style={{ width: '100%', maxWidth: 390, flex: 1, overflow: 'hidden' }}>
+            <AppStack />
+          </View>
+        </View>
+      </AppProvider>
+    );
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <AppProvider>
+      <AppStack />
+    </AppProvider>
   );
 }

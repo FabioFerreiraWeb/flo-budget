@@ -1,11 +1,12 @@
 {
   "expo": {
-    "name": "budget-app",
-    "slug": "budget-app",
+    "name": "Flo",
+    "slug": "flo-budget",
+    "description": "Gérez vos dépenses et atteignez vos objectifs d'épargne.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "budgetapp",
+    "scheme": "flo-budget",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
@@ -22,7 +23,15 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "themeColor": "#4F46E5",
+      "backgroundColor": "#F8FAFC",
+      "name": "Flo",
+      "shortName": "Flo",
+      "description": "Gérez vos dépenses et atteignez vos objectifs d'épargne.",
+      "display": "standalone",
+      "orientation": "portrait",
+      "lang": "fr"
     },
     "plugins": [
       "expo-router",
