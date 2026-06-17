@@ -64,8 +64,8 @@ export default function RootLayout() {
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
           <meta name="apple-mobile-web-app-title" content="Flo" />
         </Head>
-        <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#F8FAFC' }}>
-          <View style={{ width: '100%', maxWidth: 390, flex: 1 }}>
+        <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#F8FAFC', overflow: 'visible' }}>
+          <View style={{ width: '100%', maxWidth: 390, flex: 1, overflow: 'visible' }}>
             <AppStack />
           </View>
         </View>
