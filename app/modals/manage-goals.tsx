@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -14,9 +14,19 @@ export default function ManageGoalsModal() {
   function handleDelete(goalId: string) {
     const goal = data.savingsGoals.find(g => g.id === goalId);
     if (!goal) return;
+
+    const message = `Les ${goal.allocatedAmount.toFixed(2)} € alloués à '${goal.name}' seront restitués à ta cagnotte libre.`;
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Supprimer cet objectif ?\n\n${message}`)) {
+        deleteSavingsGoal(goalId);
+      }
+      return;
+    }
+
     Alert.alert(
-      `Supprimer "${goal.name}" ?`,
-      `Les ${goal.allocatedAmount.toFixed(2)} € alloués à cet objectif seront restitués à ta cagnotte libre.`,
+      'Supprimer cet objectif ?',
+      message,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -63,13 +73,13 @@ export default function ManageGoalsModal() {
                     </View>
                   </View>
                 </View>
-                <TouchableOpacity
+                <Pressable
                   style={styles.deleteBtn}
                   onPress={() => handleDelete(goal.id)}
-                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <IconTrash size={18} color={Colors.red} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
             );
           })
