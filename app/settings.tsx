@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, TouchableOpacity,
+  View, Text, TextInput, StyleSheet, TouchableOpacity, Pressable,
   ScrollView, Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -143,28 +143,37 @@ export default function SettingsScreen() {
   };
 
   const handleReset = () => {
+    if (Platform.OS === 'web') {
+      if (!window.confirm('Réinitialiser Flo ?\n\nToutes tes données seront supprimées définitivement. Cette action est irréversible.')) return;
+      if (!window.confirm("Tu es sûr ?\n\nCette action supprimera toutes tes dépenses, ton historique et tes objectifs d'épargne.")) return;
+      AsyncStorage.removeItem(STORAGE_KEYS.APP_DATA).then(() => {
+        resetData();
+        router.replace('/onboarding');
+      });
+      return;
+    }
     Alert.alert(
-      "Réinitialiser l'app",
-      'Toutes les données seront supprimées définitivement. Cette action est irréversible.',
+      'Réinitialiser Flo ?',
+      'Toutes tes données seront supprimées définitivement. Cette action est irréversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Continuer',
+          text: 'Réinitialiser',
           style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Confirmation finale',
-              'Confirme la suppression définitive de toutes tes données.',
+              'Tu es sûr ?',
+              "Cette action supprimera toutes tes dépenses, ton historique et tes objectifs d'épargne.",
               [
                 { text: 'Annuler', style: 'cancel' },
                 {
-                  text: 'Supprimer tout',
+                  text: 'Oui, tout supprimer',
                   style: 'destructive',
                   onPress: async () => {
                     await AsyncStorage.removeItem(STORAGE_KEYS.APP_DATA);
                     resetData();
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                    router.replace('/(tabs)');
+                    router.replace('/onboarding');
                   },
                 },
               ]
@@ -193,40 +202,66 @@ export default function SettingsScreen() {
   };
 
   const removeCategory = (id: string) => {
-    if (categories.length <= 1) return;
+    if (categories.length <= 1) {
+      if (Platform.OS === 'web') {
+        window.alert('Tu dois garder au moins une catégorie.');
+      } else {
+        Alert.alert('', 'Tu dois garder au moins une catégorie.');
+      }
+      return;
+    }
 
     const currentMonthKey = config?.monthKey ?? '';
     const affectedExpenses = data.expenses.filter(
       e => e.categoryId === id && e.monthKey === currentMonthKey
     );
+    const catName = categories.find(c => c.id === id)?.name ?? 'cette catégorie';
+
+    const doDelete = (withReassign: boolean) => {
+      const hasAutre = categories.some(c => c.id === 'autre');
+      let newCats = categories.filter(c => c.id !== id);
+      if (withReassign && !hasAutre) {
+        newCats = [...newCats, { id: 'autre', name: 'Autre', emoji: '📦', budget: 0 }];
+      }
+      if (withReassign) {
+        deleteCategoryAndReassign(id, newCats);
+      }
+      setCategories(newCats);
+    };
+
+    if (Platform.OS === 'web') {
+      let confirmed: boolean;
+      if (affectedExpenses.length > 0) {
+        const total = affectedExpenses.reduce((s, e) => s + e.amount, 0);
+        confirmed = window.confirm(
+          `Catégorie utilisée\n\nCette catégorie contient ${affectedExpenses.length} dépense(s) pour ${total.toFixed(2)} €. Elles seront déplacées dans une catégorie 'Autre'.`
+        );
+      } else {
+        confirmed = window.confirm(`Supprimer ${catName} ?`);
+      }
+      if (confirmed) doDelete(affectedExpenses.length > 0);
+      return;
+    }
 
     if (affectedExpenses.length > 0) {
       const total = affectedExpenses.reduce((s, e) => s + e.amount, 0);
       Alert.alert(
         'Catégorie utilisée',
-        `Cette catégorie contient ${affectedExpenses.length} dépense(s) ce mois pour un total de ${total.toFixed(2)} €. Si tu la supprimes, ces dépenses seront déplacées dans une catégorie 'Autre' qui sera créée automatiquement.`,
+        `Cette catégorie contient ${affectedExpenses.length} dépense(s) pour ${total.toFixed(2)} €. Elles seront déplacées dans une catégorie 'Autre'.`,
         [
           { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Supprimer quand même',
-            style: 'destructive',
-            onPress: () => {
-              const hasAutre = categories.some(c => c.id === 'autre');
-              let newCats = categories.filter(c => c.id !== id);
-              if (!hasAutre) {
-                newCats = [...newCats, { id: 'autre', name: 'Autre', emoji: '📦', budget: 0 }];
-              }
-              deleteCategoryAndReassign(id, newCats);
-              setCategories(newCats);
-            },
-          },
+          { text: 'Supprimer quand même', style: 'destructive', onPress: () => doDelete(true) },
         ]
       );
     } else {
-      Alert.alert('Supprimer', 'Supprimer cette catégorie ?', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => setCategories(cats => cats.filter(c => c.id !== id)) },
-      ]);
+      Alert.alert(
+        `Supprimer ${catName} ?`,
+        '',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', style: 'destructive', onPress: () => doDelete(false) },
+        ]
+      );
     }
   };
 
@@ -321,9 +356,9 @@ export default function SettingsScreen() {
                   />
                   <Text style={styles.catUnit}>€</Text>
                   {categories.length > 1 && (
-                    <TouchableOpacity onPress={() => removeCategory(cat.id)} style={styles.catDelBtn}>
+                    <Pressable onPress={() => removeCategory(cat.id)} style={styles.catDelBtn} hitSlop={8}>
                       <Text style={styles.catDelText}>✕</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   )}
                 </View>
               </View>
@@ -442,7 +477,7 @@ const styles = StyleSheet.create({
   catNameInput: { flex: 1, fontSize: 14, color: Colors.slate800 },
   catBudgetInput: { fontSize: 14, fontWeight: '500', color: Colors.indigo, minWidth: 40 },
   catUnit: { fontSize: 14, color: Colors.slate400 },
-  catDelBtn: { padding: 4 },
+  catDelBtn: { padding: 8 },
   catDelText: { fontSize: 13, color: Colors.slate400 },
   emojiOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.35)',
