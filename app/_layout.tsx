@@ -65,7 +65,7 @@ export default function RootLayout() {
           <meta name="apple-mobile-web-app-title" content="Flo" />
         </Head>
         <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#F8FAFC' }}>
-          <View style={{ width: '100%', maxWidth: 390, flex: 1, overflow: 'hidden' }}>
+          <View style={{ width: '100%', maxWidth: 390, flex: 1 }}>
             <AppStack />
           </View>
         </View>
