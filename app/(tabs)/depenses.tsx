@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -39,6 +39,10 @@ export default function DepensesScreen() {
   const monthLabel = formatMonthLabel(config.monthKey);
 
   const handleDelete = (id: string) => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Supprimer cette dépense ?')) deleteExpense(id);
+      return;
+    }
     Alert.alert('Supprimer', 'Supprimer cette dépense ?', [
       { text: 'Annuler', style: 'cancel' },
       {
@@ -50,6 +54,10 @@ export default function DepensesScreen() {
         },
       },
     ]);
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/modals/edit-expense?id=${id}`);
   };
 
   return (
@@ -95,6 +103,7 @@ export default function DepensesScreen() {
                 expenses={catExpenses}
                 mode="expanded"
                 onDeleteExpense={handleDelete}
+                onEditExpense={handleEdit}
               />
             );
           })

@@ -41,6 +41,7 @@ type Action =
   | { type: 'LOAD_DATA'; payload: AppData }
   | { type: 'ADD_EXPENSE'; payload: Expense }
   | { type: 'DELETE_EXPENSE'; payload: string }
+  | { type: 'UPDATE_EXPENSE'; payload: Expense }
   | { type: 'SET_MONTH_CONFIG'; payload: MonthConfig }
   | { type: 'ADD_SAVINGS_GOAL'; payload: SavingsGoal }
   | { type: 'ALLOCATE_TO_GOAL'; payload: { goalId: string; amount: number } }
@@ -58,6 +59,9 @@ function reducer(state: AppData, action: Action): AppData {
 
     case 'DELETE_EXPENSE':
       return { ...state, expenses: state.expenses.filter(e => e.id !== action.payload) };
+
+    case 'UPDATE_EXPENSE':
+      return { ...state, expenses: state.expenses.map(e => e.id === action.payload.id ? action.payload : e) };
 
     case 'SET_MONTH_CONFIG':
       return {
@@ -138,6 +142,7 @@ interface AppContextType {
   allocateToGoal: (goalId: string, amount: number) => void;
   deleteSavingsGoal: (id: string) => void;
   deleteCategoryAndReassign: (categoryId: string, newCategories: Category[]) => void;
+  updateExpense: (expense: Expense) => void;
   loadData: (data: AppData) => void;
   resetData: () => void;
   clearPendingGapMonths: () => void;
@@ -219,6 +224,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const deleteCategoryAndReassign = useCallback((categoryId: string, newCategories: Category[]) => {
     dispatch({ type: 'DELETE_CATEGORY_AND_REASSIGN', payload: { deletedId: categoryId, newCategories } });
+  }, []);
+
+  const updateExpense = useCallback((expense: Expense) => {
+    dispatch({ type: 'UPDATE_EXPENSE', payload: expense });
   }, []);
 
   const loadData = useCallback((importedData: AppData) => {
@@ -319,6 +328,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       allocateToGoal,
       deleteSavingsGoal,
       deleteCategoryAndReassign,
+      updateExpense,
       loadData,
       resetData,
       clearPendingGapMonths,

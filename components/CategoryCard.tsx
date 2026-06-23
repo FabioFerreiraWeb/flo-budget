@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { IconPencil } from '@tabler/icons-react-native';
 import { Colors } from '../constants/Colors';
 import { ProgressBar } from './ProgressBar';
 import { Category, Expense } from '../types';
@@ -9,9 +10,10 @@ interface CategoryCardProps {
   expenses?: Expense[];
   mode: 'compact' | 'expanded';
   onDeleteExpense?: (id: string) => void;
+  onEditExpense?: (id: string) => void;
 }
 
-export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense }: CategoryCardProps) {
+export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense, onEditExpense }: CategoryCardProps) {
   const percentage = category.budget > 0 ? (spent / category.budget) * 100 : 0;
   const overBy = spent - category.budget;
   const isAtLimit = percentage >= 100 && overBy <= 0;
@@ -54,6 +56,11 @@ export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense 
                 <View key={exp.id} style={styles.expenseRow}>
                   <Text style={styles.expenseDesc} numberOfLines={1}>{exp.description}</Text>
                   <Text style={styles.expenseAmount}>{exp.amount.toFixed(0)} €</Text>
+                  {onEditExpense && (
+                    <TouchableOpacity onPress={() => onEditExpense(exp.id)} style={styles.editBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <IconPencil size={13} color={Colors.slate400} />
+                    </TouchableOpacity>
+                  )}
                   {onDeleteExpense && (
                     <TouchableOpacity onPress={() => onDeleteExpense(exp.id)} style={styles.deleteBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Text style={styles.deleteText}>✕</Text>
@@ -129,6 +136,7 @@ const styles = StyleSheet.create({
   },
   expenseDesc: { flex: 1, fontSize: 12, color: Colors.slate600 },
   expenseAmount: { fontSize: 12, fontWeight: '500', color: Colors.slate800 },
+  editBtn: { padding: 2 },
   deleteBtn: { padding: 2 },
   deleteText: { fontSize: 11, color: Colors.slate400 },
   emptyText: { fontSize: 11, color: Colors.slate400, marginTop: 7, fontStyle: 'italic' },

@@ -26,6 +26,7 @@ function AppStack() {
       <Stack.Screen name="modals/month-recap" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="modals/customize-month" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="modals/manage-goals" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="modals/edit-expense" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="settings" options={{ presentation: 'modal', headerShown: false }} />
     </Stack>
   );
