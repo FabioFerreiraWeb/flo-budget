@@ -13,11 +13,12 @@ interface CategoryCardProps {
 
 export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense }: CategoryCardProps) {
   const percentage = category.budget > 0 ? (spent / category.budget) * 100 : 0;
-  const isOver = percentage >= 100;
   const overBy = spent - category.budget;
+  const isAtLimit = percentage >= 100 && overBy <= 0;
+  const isOver = overBy > 0;
 
   return (
-    <View style={[styles.card, isOver && styles.cardOver]}>
+    <View style={[styles.card, isOver && styles.cardOver, isAtLimit && styles.cardAtLimit]}>
       <View style={styles.header}>
         <Text style={styles.emoji}>{category.emoji}</Text>
         <View style={styles.info}>
@@ -26,8 +27,8 @@ export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense 
             {spent.toFixed(0)} / {category.budget.toFixed(0)} €
           </Text>
         </View>
-        <View style={[styles.badge, { backgroundColor: isOver ? Colors.redLight : Colors.indigoLight }]}>
-          <Text style={[styles.badgeText, { color: isOver ? Colors.red : Colors.indigo }]}>
+        <View style={[styles.badge, { backgroundColor: isOver ? Colors.redLight : isAtLimit ? Colors.amberLight : Colors.indigoLight }]}>
+          <Text style={[styles.badgeText, { color: isOver ? Colors.red : isAtLimit ? Colors.amber : Colors.indigo }]}>
             {percentage.toFixed(0)}%
           </Text>
         </View>
@@ -40,6 +41,11 @@ export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense 
           {isOver && (
             <Text style={styles.overText}>
               ⚠ Plafond dépassé de {overBy.toFixed(0)} €
+            </Text>
+          )}
+          {isAtLimit && (
+            <Text style={styles.atLimitText}>
+              ✓ Plafond atteint
             </Text>
           )}
           {expenses && expenses.length > 0 && (
@@ -77,6 +83,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.red,
   },
+  cardAtLimit: {
+    borderWidth: 1.5,
+    borderColor: Colors.amber,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -96,6 +106,12 @@ const styles = StyleSheet.create({
   overText: {
     fontSize: 11,
     color: Colors.red,
+    marginTop: 7,
+    fontWeight: '500',
+  },
+  atLimitText: {
+    fontSize: 11,
+    color: Colors.amber,
     marginTop: 7,
     fontWeight: '500',
   },

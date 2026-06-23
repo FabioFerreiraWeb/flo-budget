@@ -9,6 +9,21 @@ import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
 
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+function formatDateChip(d: Date): string {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const diff = Math.round((now.getTime() - d.getTime()) / 86400000);
+  if (diff === 0) return "Aujourd'hui";
+  if (diff === 1) return 'Hier';
+  return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+}
+
 export default function AddExpenseModal() {
   const { data, addExpense } = useApp();
   const router = useRouter();
@@ -16,7 +31,15 @@ export default function AddExpenseModal() {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [date] = useState(new Date().toISOString());
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const pastDates: Date[] = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    return d;
+  });
 
   const categories = data.currentMonthConfig?.categories ?? [];
   const isValid = description.trim() !== '' && parseFloat(amount) > 0 && selectedCategoryId !== null;
@@ -30,7 +53,7 @@ export default function AddExpenseModal() {
       description: description.trim(),
       amount: parseFloat(amount),
       categoryId: selectedCategoryId!,
-      date,
+      date: selectedDate.toISOString(),
     });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
@@ -100,11 +123,25 @@ export default function AddExpenseModal() {
           </ScrollView>
 
           <Text style={styles.label}>Date</Text>
-          <View style={[styles.input, styles.dateRow]}>
-            <Text style={styles.dateText}>
-              {`Aujourd'hui · ${new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`}
-            </Text>
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
+            <View style={styles.datePills}>
+              {pastDates.map((d, i) => {
+                const isSelected = isSameDay(d, selectedDate);
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    style={[styles.datePill, isSelected && styles.datePillSelected]}
+                    onPress={() => setSelectedDate(d)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.datePillText, isSelected && styles.datePillTextSelected]}>
+                      {formatDateChip(d)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
         </ScrollView>
 
         <View style={styles.footer}>
@@ -187,8 +224,17 @@ const styles = StyleSheet.create({
   pillEmoji: { fontSize: 14 },
   pillText: { fontSize: 13, fontWeight: '500', color: Colors.slate600 },
   pillTextSelected: { color: Colors.white },
-  dateRow: { justifyContent: 'center' },
-  dateText: { fontSize: 14, color: Colors.slate800 },
+  dateScroll: { marginHorizontal: -16 },
+  datePills: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 4 },
+  datePill: {
+    backgroundColor: Colors.slate100,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 99,
+  },
+  datePillSelected: { backgroundColor: Colors.indigo },
+  datePillText: { fontSize: 13, fontWeight: '500', color: Colors.slate600 },
+  datePillTextSelected: { color: Colors.white },
   footer: {
     padding: 16,
     borderTopWidth: 1,
