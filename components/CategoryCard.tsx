@@ -3,6 +3,7 @@ import { IconPencil } from '@tabler/icons-react-native';
 import { Colors } from '../constants/Colors';
 import { ProgressBar } from './ProgressBar';
 import { Category, Expense } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CategoryCardProps {
   category: Category;
@@ -14,6 +15,7 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense, onEditExpense }: CategoryCardProps) {
+  const { t } = useLanguage();
   const percentage = category.budget > 0 ? (spent / category.budget) * 100 : 0;
   const overBy = spent - category.budget;
   const isAtLimit = percentage >= 100 && overBy <= 0;
@@ -42,12 +44,12 @@ export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense,
         <>
           {isOver && (
             <Text style={styles.overText}>
-              ⚠ Plafond dépassé de {overBy.toFixed(0)} €
+              ⚠ {t.expenses.overBudget} {overBy.toFixed(0)} €
             </Text>
           )}
           {isAtLimit && (
             <Text style={styles.atLimitText}>
-              ✓ Plafond atteint
+              {t.expenses.atLimit}
             </Text>
           )}
           {expenses && expenses.length > 0 && (
@@ -71,7 +73,7 @@ export function CategoryCard({ category, spent, expenses, mode, onDeleteExpense,
             </View>
           )}
           {expenses && expenses.length === 0 && (
-            <Text style={styles.emptyText}>Aucune dépense dans cette catégorie</Text>
+            <Text style={styles.emptyText}>{t.expenses.noExpensesInCategory}</Text>
           )}
         </>
       )}

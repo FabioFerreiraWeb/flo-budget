@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface Props {
   currentStep: number;
@@ -31,15 +32,16 @@ const dotStyles = StyleSheet.create({
 });
 
 export function Step2({ currentStep, income, setIncome, savingsGoal, setSavingsGoal, onNext, onBack }: Props) {
+  const { t } = useLanguage();
   const incomeNum = parseFloat(income) || 0;
   const savingsNum = parseFloat(savingsGoal) || 0;
   const remaining = incomeNum - savingsNum;
 
   const incomeError = income !== '' && incomeNum <= 0
-    ? 'Le revenu doit être supérieur à 0 €'
+    ? t.errors.incomeRequired
     : null;
   const savingsError = income !== '' && savingsGoal !== '' && savingsNum >= incomeNum
-    ? "L'objectif d'épargne doit être inférieur au revenu mensuel."
+    ? t.errors.savingsExceedsIncome
     : null;
   const canContinue = income !== '' && savingsGoal !== '' && !incomeError && !savingsError;
 
@@ -51,13 +53,11 @@ export function Step2({ currentStep, income, setIncome, savingsGoal, setSavingsG
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Tes finances de base</Text>
-          <Text style={styles.subtitle}>
-            Ces informations peuvent être modifiées à tout moment dans les Réglages.
-          </Text>
+          <Text style={styles.title}>{t.onboarding.step2Title}</Text>
+          <Text style={styles.subtitle}>{t.onboarding.step2Sub}</Text>
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.label}>Revenu mensuel net</Text>
+            <Text style={styles.label}>{t.onboarding.step2Income}</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.input, incomeError ? styles.inputErr : null]}
@@ -74,7 +74,7 @@ export function Step2({ currentStep, income, setIncome, savingsGoal, setSavingsG
           </View>
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.label}>Objectif d'épargne mensuel</Text>
+            <Text style={styles.label}>{t.onboarding.step2Savings}</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.input, savingsError ? styles.inputErr : null]}
@@ -90,7 +90,7 @@ export function Step2({ currentStep, income, setIncome, savingsGoal, setSavingsG
 
             {income !== '' && savingsGoal !== '' && !savingsError && (
               <Text style={[styles.remaining, { color: remaining >= 0 ? Colors.green : Colors.red }]}>
-                Il te restera {remaining.toFixed(0)} € pour tes dépenses
+                {t.onboarding.step2Remaining.replace('{amount}', remaining.toFixed(0))}
               </Text>
             )}
           </View>
@@ -103,10 +103,10 @@ export function Step2({ currentStep, income, setIncome, savingsGoal, setSavingsG
             disabled={!canContinue}
             activeOpacity={0.85}
           >
-            <Text style={styles.nextBtnText}>Continuer →</Text>
+            <Text style={styles.nextBtnText}>{t.onboarding.step2Btn}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← Retour</Text>
+            <Text style={styles.backBtnText}>{t.onboarding.back}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

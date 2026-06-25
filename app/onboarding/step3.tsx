@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { Category } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 const EMOJI_CHOICES = ['🍽️', '🛍️', '🚗', '🎮', '🏠', '💊', '✈️', '📱'];
 
@@ -43,6 +44,7 @@ const dotStyles = StyleSheet.create({
 });
 
 export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Props) {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [newEmoji, setNewEmoji] = useState('🍽️');
@@ -59,9 +61,9 @@ export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Pr
 
   const removeCategory = (id: string) => {
     if (categories.length <= 1) return;
-    Alert.alert('Supprimer', 'Supprimer cette catégorie ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => setCategories(cats => cats.filter(c => c.id !== id)) },
+    Alert.alert(t.settings.deleteCategoryConfirm, t.settings.deleteCategoryConfirm, [
+      { text: t.settings.cancel, style: 'cancel' },
+      { text: t.settings.reset, style: 'destructive', onPress: () => setCategories(cats => cats.filter(c => c.id !== id)) },
     ]);
   };
 
@@ -87,10 +89,8 @@ export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Pr
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Tes catégories de dépenses</Text>
-        <Text style={styles.subtitle}>
-          Définis un plafond mensuel pour chaque catégorie. Tu pourras en ajouter d'autres plus tard.
-        </Text>
+        <Text style={styles.title}>{t.onboarding.step3Title}</Text>
+        <Text style={styles.subtitle}>{t.onboarding.step3Sub}</Text>
 
         {categories.map(cat => (
           <View key={cat.id} style={styles.catRow}>
@@ -113,27 +113,25 @@ export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Pr
         ))}
 
         <TouchableOpacity style={styles.addBtn} onPress={() => setShowAddSheet(true)}>
-          <Text style={styles.addBtnText}>＋ Ajouter une catégorie</Text>
+          <Text style={styles.addBtnText}>{t.onboarding.step3AddCategory}</Text>
         </TouchableOpacity>
 
         <View style={[styles.summary, isOverBudget && styles.summaryWarn]}>
           <Text style={styles.summaryText}>
-            Total catégories : {totalBudget} € / {available} € disponibles
+            {t.onboarding.step3Total.replace('{used}', String(totalBudget)).replace('{available}', String(available))}
           </Text>
           {isOverBudget && (
-            <Text style={styles.summaryWarnText}>
-              Attention, tes catégories dépassent ton budget disponible
-            </Text>
+            <Text style={styles.summaryWarnText}>{t.onboarding.step3Warn}</Text>
           )}
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.finishBtn} onPress={() => onFinish(categories)} activeOpacity={0.85}>
-          <Text style={styles.finishBtnText}>Démarrer l'app →</Text>
+          <Text style={styles.finishBtnText}>{t.onboarding.step3Btn}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>← Retour</Text>
+          <Text style={styles.backBtnText}>{t.onboarding.back}</Text>
         </TouchableOpacity>
       </View>
 
@@ -143,9 +141,9 @@ export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Pr
           <TouchableOpacity style={styles.overlay} onPress={() => setShowAddSheet(false)} activeOpacity={1} />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Nouvelle catégorie</Text>
+            <Text style={styles.sheetTitle}>{t.onboarding.step3NewCategory}</Text>
 
-            <Text style={styles.sheetLabel}>Emoji</Text>
+            <Text style={styles.sheetLabel}>{t.goalModal.icon}</Text>
             <View style={styles.emojiGrid}>
               {EMOJI_CHOICES.map(e => (
                 <TouchableOpacity
@@ -158,7 +156,7 @@ export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Pr
               ))}
             </View>
 
-            <Text style={styles.sheetLabel}>Nom</Text>
+            <Text style={styles.sheetLabel}>{t.goalModal.name}</Text>
             <TextInput
               style={styles.sheetInput}
               placeholder="ex : Abonnements"
@@ -168,7 +166,7 @@ export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Pr
               autoFocus
             />
 
-            <Text style={styles.sheetLabel}>Plafond mensuel</Text>
+            <Text style={styles.sheetLabel}>{t.onboarding.step3Limit}</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.sheetInput, { flex: 1 }]}
@@ -186,7 +184,7 @@ export function Step3({ currentStep, income, savingsGoal, onBack, onFinish }: Pr
               onPress={addCategory}
               disabled={!newName.trim()}
             >
-              <Text style={styles.sheetAddBtnText}>Ajouter</Text>
+              <Text style={styles.sheetAddBtnText}>{t.onboarding.step3Add}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

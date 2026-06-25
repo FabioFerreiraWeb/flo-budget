@@ -5,8 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
 import { MonthCard } from '../../components/MonthCard';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function HistoriqueScreen() {
+  const { t } = useLanguage();
   const { data } = useApp();
   const sorted = [...data.monthSummaries].sort((a, b) => b.monthKey.localeCompare(a.monthKey));
 
@@ -14,8 +16,8 @@ export default function HistoriqueScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Historique</Text>
-          <Text style={styles.headerSub}>Mois précédents</Text>
+          <Text style={styles.headerTitle}>{t.history.title}</Text>
+          <Text style={styles.headerSub}>{t.history.subtitle}</Text>
         </View>
       </View>
 
@@ -23,7 +25,7 @@ export default function HistoriqueScreen() {
         {sorted.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📅</Text>
-            <Text style={styles.emptyText}>L'historique apparaîtra ici à la fin du premier mois</Text>
+            <Text style={styles.emptyText}>{t.history.emptyText}</Text>
           </View>
         ) : (
           sorted.map(summary => (

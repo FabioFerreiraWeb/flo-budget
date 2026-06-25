@@ -10,14 +10,16 @@ import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
 import { CategoryCard } from '../../components/CategoryCard';
 import { ProgressBar } from '../../components/ProgressBar';
+import { useLanguage } from '../../context/LanguageContext';
 
-function formatMonthLabel(monthKey: string): string {
+function formatMonthLabel(monthKey: string, locale: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 export default function DepensesScreen() {
+  const { t, locale } = useLanguage();
   const { data, getCurrentMonthExpenses, getCategorySpent, deleteExpense } = useApp();
   const router = useRouter();
 
@@ -25,7 +27,7 @@ export default function DepensesScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <Text style={styles.emptyText}>Configurez d'abord votre mois</Text>
+          <Text style={styles.emptyText}>{t.home.configureMonth}</Text>
         </View>
       </SafeAreaView>
     );
@@ -36,17 +38,17 @@ export default function DepensesScreen() {
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const totalBudget = config.categories.reduce((s, c) => s + c.budget, 0);
   const globalPct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
-  const monthLabel = formatMonthLabel(config.monthKey);
+  const monthLabel = formatMonthLabel(config.monthKey, locale);
 
   const handleDelete = (id: string) => {
     if (Platform.OS === 'web') {
-      if (window.confirm('Supprimer cette dépense ?')) deleteExpense(id);
+      if (window.confirm(t.addExpense.deleteConfirm)) deleteExpense(id);
       return;
     }
-    Alert.alert('Supprimer', 'Supprimer cette dépense ?', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t.addExpense.deleteConfirm, t.addExpense.deleteConfirmMsg, [
+      { text: t.settings.cancel, style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t.settings.reset,
         style: 'destructive',
         onPress: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -64,7 +66,7 @@ export default function DepensesScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Dépenses</Text>
+          <Text style={styles.headerTitle}>{t.expenses.title}</Text>
           <Text style={styles.headerSub}>{monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</Text>
         </View>
         <TouchableOpacity onPress={() => router.push('/modals/add-expense')} style={styles.addBtn}>
@@ -75,7 +77,7 @@ export default function DepensesScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Global progress */}
         <View style={styles.globalCard}>
-          <Text style={styles.globalTitle}>Ce mois — {totalSpent.toFixed(0)} € / {totalBudget.toFixed(0)} € budget</Text>
+          <Text style={styles.globalTitle}>{t.expenses.globalProgress} — {totalSpent.toFixed(0)} € / {totalBudget.toFixed(0)} € budget</Text>
           <View style={styles.barWrap}>
             <ProgressBar percentage={globalPct} height={7} />
           </View>
@@ -83,15 +85,15 @@ export default function DepensesScreen() {
             <Text style={{ color: Colors.green }}>{globalPct.toFixed(0)}%</Text>
             {'  '}
             {totalBudget - totalSpent >= 0
-              ? `${(totalBudget - totalSpent).toFixed(0)} € restants`
-              : `${Math.abs(totalBudget - totalSpent).toFixed(0)} € dépassés`}
+              ? `${(totalBudget - totalSpent).toFixed(0)} € ${t.expenses.remaining}`
+              : `${Math.abs(totalBudget - totalSpent).toFixed(0)} € ${t.expenses.exceeded}`}
           </Text>
         </View>
 
-        <Text style={styles.sectionLabel}>PAR CATÉGORIE</Text>
+        <Text style={styles.sectionLabel}>{t.expenses.byCategory}</Text>
 
         {config.categories.length === 0 ? (
-          <Text style={styles.emptyText}>Aucune catégorie configurée</Text>
+          <Text style={styles.emptyText}>{t.expenses.noCategories}</Text>
         ) : (
           config.categories.map(cat => {
             const catExpenses = expenses.filter(e => e.categoryId === cat.id);
@@ -112,7 +114,7 @@ export default function DepensesScreen() {
         {expenses.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🎉</Text>
-            <Text style={styles.emptyStateText}>Aucune dépense ce mois — excellent départ !</Text>
+            <Text style={styles.emptyStateText}>{t.home.noExpenses}</Text>
           </View>
         )}
 
@@ -125,7 +127,7 @@ export default function DepensesScreen() {
           onPress={() => router.push('/modals/add-expense')}
           activeOpacity={0.85}
         >
-          <Text style={styles.fabText}>＋ Nouvelle dépense</Text>
+          <Text style={styles.fabText}>{t.expenses.addExpense}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

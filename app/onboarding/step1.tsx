@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconCreditCard, IconCoin, IconChartBar } from '@tabler/icons-react-native';
 import { Colors } from '../../constants/Colors';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface Props {
   currentStep: number;
@@ -27,6 +28,7 @@ const dotStyles = StyleSheet.create({
 });
 
 export function Step1({ currentStep, onNext }: Props) {
+  const { t } = useLanguage();
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.dotsWrap}>
@@ -35,36 +37,34 @@ export function Step1({ currentStep, onNext }: Props) {
 
       <View style={styles.center}>
         <Text style={styles.illustration}>💰</Text>
-        <Text style={styles.title}>Bienvenue dans Flo</Text>
-        <Text style={styles.subtitle}>
-          Gérez vos dépenses et suivez votre épargne mois après mois, simplement.
-        </Text>
+        <Text style={styles.title}>{t.onboarding.step1Title}</Text>
+        <Text style={styles.subtitle}>{t.onboarding.step1Sub}</Text>
 
         <View style={styles.features}>
           <View style={styles.featureRow}>
             <View style={styles.featureIcon}>
               <IconCreditCard size={20} color={Colors.indigo} />
             </View>
-            <Text style={styles.featureText}>Suivez vos dépenses par catégorie</Text>
+            <Text style={styles.featureText}>{t.onboarding.step1Point1}</Text>
           </View>
           <View style={styles.featureRow}>
             <View style={styles.featureIcon}>
               <IconCoin size={20} color={Colors.green} />
             </View>
-            <Text style={styles.featureText}>Atteignez vos objectifs d'épargne</Text>
+            <Text style={styles.featureText}>{t.onboarding.step1Point2}</Text>
           </View>
           <View style={styles.featureRow}>
             <View style={styles.featureIcon}>
               <IconChartBar size={20} color={Colors.amber} />
             </View>
-            <Text style={styles.featureText}>Consultez vos bilans mensuels</Text>
+            <Text style={styles.featureText}>{t.onboarding.step1Point3}</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.nextBtn} onPress={onNext} activeOpacity={0.85}>
-          <Text style={styles.nextBtnText}>Commencer →</Text>
+          <Text style={styles.nextBtnText}>{t.onboarding.step1Btn}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear()
@@ -15,16 +16,17 @@ function isSameDay(a: Date, b: Date) {
     && a.getDate() === b.getDate();
 }
 
-function formatDateChip(d: Date): string {
+function formatDateChip(d: Date, locale: string, today: string, yesterday: string): string {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const diff = Math.round((now.getTime() - d.getTime()) / 86400000);
-  if (diff === 0) return "Aujourd'hui";
-  if (diff === 1) return 'Hier';
-  return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+  if (diff === 0) return today;
+  if (diff === 1) return yesterday;
+  return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric' });
 }
 
 export default function AddExpenseModal() {
+  const { t, locale } = useLanguage();
   const { data, addExpense } = useApp();
   const router = useRouter();
 
@@ -46,7 +48,7 @@ export default function AddExpenseModal() {
 
   const handleSave = () => {
     if (!isValid) {
-      Alert.alert('Champs manquants', 'Remplis tous les champs avant de continuer.');
+      Alert.alert('', t.addExpense.categoryRequired);
       return;
     }
     addExpense({
@@ -66,8 +68,8 @@ export default function AddExpenseModal() {
 
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Nouvelle dépense</Text>
-            <Text style={styles.subtitle}>Que viens-tu de dépenser ?</Text>
+            <Text style={styles.title}>{t.addExpense.title}</Text>
+            <Text style={styles.subtitle}>{t.addExpense.subtitle}</Text>
           </View>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
             <Text style={styles.closeText}>✕</Text>
@@ -75,7 +77,7 @@ export default function AddExpenseModal() {
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Description</Text>
+          <Text style={styles.label}>{t.addExpense.description}</Text>
           <TextInput
             style={styles.input}
             placeholder="Ex : Restaurant entre potes"
@@ -85,7 +87,7 @@ export default function AddExpenseModal() {
             autoFocus
           />
 
-          <Text style={styles.label}>Montant</Text>
+          <Text style={styles.label}>{t.addExpense.amount}</Text>
           <View style={styles.amountRow}>
             <TextInput
               style={[styles.input, styles.amountInput]}
@@ -100,7 +102,7 @@ export default function AddExpenseModal() {
             </View>
           </View>
 
-          <Text style={styles.label}>Catégorie</Text>
+          <Text style={styles.label}>{t.addExpense.category}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsScroll}>
             <View style={styles.pills}>
               {categories.map(cat => {
@@ -122,7 +124,7 @@ export default function AddExpenseModal() {
             </View>
           </ScrollView>
 
-          <Text style={styles.label}>Date</Text>
+          <Text style={styles.label}>{t.addExpense.date}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
             <View style={styles.datePills}>
               {pastDates.map((d, i) => {
@@ -135,7 +137,7 @@ export default function AddExpenseModal() {
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.datePillText, isSelected && styles.datePillTextSelected]}>
-                      {formatDateChip(d)}
+                      {formatDateChip(d, locale, t.addExpense.today, t.addExpense.yesterday)}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -150,7 +152,7 @@ export default function AddExpenseModal() {
             onPress={handleSave}
             activeOpacity={0.85}
           >
-            <Text style={styles.saveBtnText}>Enregistrer la dépense</Text>
+            <Text style={styles.saveBtnText}>{t.addExpense.save}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

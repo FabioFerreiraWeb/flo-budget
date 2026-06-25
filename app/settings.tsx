@@ -9,17 +9,25 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
-import { IconUpload, IconDownload, IconTrash } from '@tabler/icons-react-native';
+import { IconUpload, IconDownload, IconTrash, IconLanguage } from '@tabler/icons-react-native';
 import { Colors } from '../constants/Colors';
 import { useApp } from '../context/AppContext';
+import { useLanguage, type Language } from '../context/LanguageContext';
 import { AppData, Category } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../constants/storage';
 
 const EMOJI_CHOICES = ['🍽️', '🛍️', '🚗', '🎮', '🏠', '💊', '✈️', '📱', '📦', '🐾', '💼', '🎓', '⚽', '🎵', '🌿', '💡'];
 
+const LANGUAGE_OPTIONS: { code: Language; label: string; flag: string }[] = [
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'pt', label: 'Português', flag: '🇵🇹' },
+];
+
 export default function SettingsScreen() {
   const { data, setMonthConfig, deleteCategoryAndReassign, loadData, resetData } = useApp();
+  const { t, language, setLanguage, locale } = useLanguage();
   const router = useRouter();
   const config = data.currentMonthConfig;
 
@@ -28,25 +36,19 @@ export default function SettingsScreen() {
   const [categories, setCategories] = useState<Category[]>(config?.categories ?? []);
   const [exporting, setExporting] = useState(false);
   const [emojiPickerCat, setEmojiPickerCat] = useState<string | null>(null);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
 
   const incomeNum = parseFloat(income);
   const savingsNum = parseFloat(savingsGoal);
-  const incomeError = income !== '' && incomeNum <= 0
-    ? 'Le revenu doit être supérieur à 0 €'
-    : null;
+  const incomeError = income !== '' && incomeNum <= 0 ? t.errors.incomeRequired : null;
   const savingsError = income !== '' && savingsGoal !== '' && savingsNum >= incomeNum
-    ? "L'objectif d'épargne doit être inférieur au revenu mensuel."
+    ? t.errors.savingsExceedsIncome
     : null;
   const canSave = !incomeError && !savingsError && income !== '' && savingsGoal !== '';
 
   const handleSave = () => {
     if (!config || !canSave) return;
-    setMonthConfig({
-      ...config,
-      income: incomeNum,
-      savingsGoal: savingsNum,
-      categories,
-    });
+    setMonthConfig({ ...config, income: incomeNum, savingsGoal: savingsNum, categories });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
   };
@@ -54,13 +56,7 @@ export default function SettingsScreen() {
   const handleExport = async () => {
     try {
       setExporting(true);
-
-      const exportPayload = {
-        version: '1.0',
-        app: 'Flo',
-        exportedAt: new Date().toISOString(),
-        data,
-      };
+      const exportPayload = { version: '1.0', app: 'Flo', exportedAt: new Date().toISOString(), data };
       const json = JSON.stringify(exportPayload, null, 2);
       const date = new Date().toISOString().split('T')[0];
       const filename = `flo-export-${date}.json`;
@@ -78,16 +74,15 @@ export default function SettingsScreen() {
       } else {
         const isAvailable = await Sharing.isAvailableAsync();
         if (!isAvailable) {
-          Alert.alert('Non disponible', "Le partage de fichiers n'est pas disponible sur cet appareil.");
+          Alert.alert('', t.settings.export);
           return;
         }
         const file = new File(Paths.cache, filename);
         file.write(json);
-        await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Exporter les données Flo' });
+        await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: t.settings.export });
       }
     } catch (e: any) {
       console.error('Export error:', e);
-      Alert.alert('Erreur export', e?.message ?? "Impossible d'exporter les données.");
     } finally {
       setExporting(false);
     }
@@ -108,27 +103,43 @@ export default function SettingsScreen() {
       const parsed = JSON.parse(raw);
 
       if (!parsed.version || !parsed.data) {
-        Alert.alert('Fichier invalide', "Assure-toi d'importer un fichier exporté depuis cette app.");
+        if (Platform.OS === 'web') {
+          window.alert(t.errors.invalidFile);
+        } else {
+          Alert.alert('', t.errors.invalidFile);
+        }
         return;
       }
 
       const importedData = parsed.data as AppData;
       if (typeof importedData.currentMonthConfig === 'undefined' || !Array.isArray(importedData.expenses)) {
-        Alert.alert('Fichier invalide', "Assure-toi d'importer un fichier exporté depuis cette app.");
+        if (Platform.OS === 'web') {
+          window.alert(t.errors.invalidFile);
+        } else {
+          Alert.alert('', t.errors.invalidFile);
+        }
         return;
       }
 
       const exportDate = parsed.exportedAt
-        ? new Date(parsed.exportedAt).toLocaleDateString('fr-FR')
-        : 'date inconnue';
+        ? new Date(parsed.exportedAt).toLocaleDateString(locale)
+        : '?';
+
+      if (Platform.OS === 'web') {
+        if (window.confirm(`${t.errors.importConfirm}\n\n${t.errors.importMsg} (${exportDate})`)) {
+          loadData(importedData);
+          router.replace('/(tabs)');
+        }
+        return;
+      }
 
       Alert.alert(
-        'Restaurer les données ?',
-        `Cette action remplacera toutes tes données actuelles par celles du fichier du ${exportDate}. Cette action est irréversible.`,
+        t.errors.importConfirm,
+        `${t.errors.importMsg} (${exportDate})`,
         [
-          { text: 'Annuler', style: 'cancel' },
+          { text: t.settings.cancel, style: 'cancel' },
           {
-            text: 'Restaurer',
+            text: t.errors.restore,
             style: 'destructive',
             onPress: () => {
               loadData(importedData);
@@ -138,14 +149,18 @@ export default function SettingsScreen() {
         ]
       );
     } catch {
-      Alert.alert('Erreur', 'Impossible de lire le fichier.');
+      if (Platform.OS === 'web') {
+        window.alert(t.errors.invalidFile);
+      } else {
+        Alert.alert('', t.errors.invalidFile);
+      }
     }
   };
 
   const handleReset = () => {
     if (Platform.OS === 'web') {
-      if (!window.confirm('Réinitialiser Flo ?\n\nToutes tes données seront supprimées définitivement. Cette action est irréversible.')) return;
-      if (!window.confirm("Tu es sûr ?\n\nCette action supprimera toutes tes dépenses, ton historique et tes objectifs d'épargne.")) return;
+      if (!window.confirm(`${t.settings.resetConfirm}\n\n${t.settings.resetMsg}`)) return;
+      if (!window.confirm(`${t.settings.resetConfirm2}\n\n${t.settings.resetMsg2}`)) return;
       AsyncStorage.removeItem(STORAGE_KEYS.APP_DATA).then(() => {
         resetData();
         router.replace('/onboarding');
@@ -153,21 +168,21 @@ export default function SettingsScreen() {
       return;
     }
     Alert.alert(
-      'Réinitialiser Flo ?',
-      'Toutes tes données seront supprimées définitivement. Cette action est irréversible.',
+      t.settings.resetConfirm,
+      t.settings.resetMsg,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.settings.cancel, style: 'cancel' },
         {
-          text: 'Réinitialiser',
+          text: t.settings.reset,
           style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Tu es sûr ?',
-              "Cette action supprimera toutes tes dépenses, ton historique et tes objectifs d'épargne.",
+              t.settings.resetConfirm2,
+              t.settings.resetMsg2,
               [
-                { text: 'Annuler', style: 'cancel' },
+                { text: t.settings.cancel, style: 'cancel' },
                 {
-                  text: 'Oui, tout supprimer',
+                  text: t.settings.resetFinal,
                   style: 'destructive',
                   onPress: async () => {
                     await AsyncStorage.removeItem(STORAGE_KEYS.APP_DATA);
@@ -198,24 +213,21 @@ export default function SettingsScreen() {
   };
 
   const addCategory = () => {
-    setCategories(cats => [...cats, { id: Date.now().toString(), name: 'Nouvelle catégorie', emoji: '📦', budget: 100 }]);
+    setCategories(cats => [...cats, { id: Date.now().toString(), name: t.onboarding.step3NewCategory, emoji: '📦', budget: 100 }]);
   };
 
   const removeCategory = (id: string) => {
     if (categories.length <= 1) {
       if (Platform.OS === 'web') {
-        window.alert('Tu dois garder au moins une catégorie.');
+        window.alert(t.settings.lastCategory);
       } else {
-        Alert.alert('', 'Tu dois garder au moins une catégorie.');
+        Alert.alert('', t.settings.lastCategory);
       }
       return;
     }
 
     const currentMonthKey = config?.monthKey ?? '';
-    const affectedExpenses = data.expenses.filter(
-      e => e.categoryId === id && e.monthKey === currentMonthKey
-    );
-    const catName = categories.find(c => c.id === id)?.name ?? 'cette catégorie';
+    const affectedExpenses = data.expenses.filter(e => e.categoryId === id && e.monthKey === currentMonthKey);
 
     const doDelete = (withReassign: boolean) => {
       const hasAutre = categories.some(c => c.id === 'autre');
@@ -234,10 +246,12 @@ export default function SettingsScreen() {
       if (affectedExpenses.length > 0) {
         const total = affectedExpenses.reduce((s, e) => s + e.amount, 0);
         confirmed = window.confirm(
-          `Catégorie utilisée\n\nCette catégorie contient ${affectedExpenses.length} dépense(s) pour ${total.toFixed(2)} €. Elles seront déplacées dans une catégorie 'Autre'.`
+          t.settings.deleteCategoryUsed
+            .replace('{count}', String(affectedExpenses.length))
+            .replace('{amount}', total.toFixed(2))
         );
       } else {
-        confirmed = window.confirm(`Supprimer ${catName} ?`);
+        confirmed = window.confirm(t.settings.deleteCategoryConfirm);
       }
       if (confirmed) doDelete(affectedExpenses.length > 0);
       return;
@@ -246,31 +260,35 @@ export default function SettingsScreen() {
     if (affectedExpenses.length > 0) {
       const total = affectedExpenses.reduce((s, e) => s + e.amount, 0);
       Alert.alert(
-        'Catégorie utilisée',
-        `Cette catégorie contient ${affectedExpenses.length} dépense(s) pour ${total.toFixed(2)} €. Elles seront déplacées dans une catégorie 'Autre'.`,
+        t.settings.deleteCategoryConfirm,
+        t.settings.deleteCategoryUsed
+          .replace('{count}', String(affectedExpenses.length))
+          .replace('{amount}', total.toFixed(2)),
         [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Supprimer quand même', style: 'destructive', onPress: () => doDelete(true) },
+          { text: t.settings.cancel, style: 'cancel' },
+          { text: t.settings.reset, style: 'destructive', onPress: () => doDelete(true) },
         ]
       );
     } else {
       Alert.alert(
-        `Supprimer ${catName} ?`,
+        t.settings.deleteCategoryConfirm,
         '',
         [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Supprimer', style: 'destructive', onPress: () => doDelete(false) },
+          { text: t.settings.cancel, style: 'cancel' },
+          { text: t.settings.reset, style: 'destructive', onPress: () => doDelete(false) },
         ]
       );
     }
   };
+
+  const currentLangOption = LANGUAGE_OPTIONS.find(o => o.code === language);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Réglages</Text>
+            <Text style={styles.title}>{t.settings.title}</Text>
             <Text style={styles.headerSub}>Configuration</Text>
           </View>
           <TouchableOpacity
@@ -278,16 +296,17 @@ export default function SettingsScreen() {
             style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
             disabled={!canSave}
           >
-            <Text style={styles.saveBtnText}>Enregistrer</Text>
+            <Text style={styles.saveBtnText}>{t.settings.save}</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+
           {/* Finances */}
-          <Text style={styles.sectionLabel}>FINANCES</Text>
+          <Text style={styles.sectionLabel}>{t.settings.finances.toUpperCase()}</Text>
           <View style={styles.card}>
             <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Revenu mensuel</Text>
+              <Text style={styles.fieldLabel}>{t.settings.monthlyIncome}</Text>
               <View style={styles.fieldInput}>
                 <TextInput
                   style={[styles.fieldValue, incomeError ? { color: Colors.red } : null]}
@@ -301,12 +320,10 @@ export default function SettingsScreen() {
                 <Text style={styles.fieldUnit}>€</Text>
               </View>
             </View>
-            {incomeError && (
-              <Text style={styles.inlineError}>{incomeError}</Text>
-            )}
+            {incomeError && <Text style={styles.inlineError}>{incomeError}</Text>}
             <View style={styles.sep} />
             <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Objectif épargne</Text>
+              <Text style={styles.fieldLabel}>{t.settings.savingsGoal}</Text>
               <View style={styles.fieldInput}>
                 <TextInput
                   style={[styles.fieldValue, savingsError ? { color: Colors.red } : null]}
@@ -320,18 +337,16 @@ export default function SettingsScreen() {
                 <Text style={styles.fieldUnit}>€</Text>
               </View>
             </View>
-            {savingsError && (
-              <Text style={styles.inlineError}>{savingsError}</Text>
-            )}
+            {savingsError && <Text style={styles.inlineError}>{savingsError}</Text>}
             <View style={styles.sep} />
             <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Devise</Text>
+              <Text style={styles.fieldLabel}>{t.settings.currency}</Text>
               <Text style={styles.fieldFixed}>€ EUR</Text>
             </View>
           </View>
 
           {/* Categories */}
-          <Text style={styles.sectionLabel}>CATÉGORIES DE DÉPENSES</Text>
+          <Text style={styles.sectionLabel}>{t.settings.categories.toUpperCase()}</Text>
           <View style={styles.card}>
             {categories.map((cat, index) => (
               <View key={cat.id}>
@@ -344,7 +359,7 @@ export default function SettingsScreen() {
                     style={styles.catNameInput}
                     value={cat.name}
                     onChangeText={v => updateCategoryName(cat.id, v)}
-                    placeholder="Nom"
+                    placeholder={t.goalModal.name}
                     placeholderTextColor={Colors.slate400}
                   />
                   <TextInput
@@ -366,19 +381,22 @@ export default function SettingsScreen() {
           </View>
 
           <TouchableOpacity style={styles.addCatBtn} onPress={addCategory}>
-            <Text style={styles.addCatText}>+ Ajouter une catégorie</Text>
+            <Text style={styles.addCatText}>{t.settings.addCategory}</Text>
           </TouchableOpacity>
 
           {/* Emoji picker modal */}
           <Modal visible={emojiPickerCat !== null} transparent animationType="fade" onRequestClose={() => setEmojiPickerCat(null)}>
             <TouchableOpacity style={styles.emojiOverlay} onPress={() => setEmojiPickerCat(null)} activeOpacity={1}>
               <View style={styles.emojiSheet}>
-                <Text style={styles.emojiSheetTitle}>Choisir un emoji</Text>
+                <Text style={styles.emojiSheetTitle}>{t.goalModal.icon}</Text>
                 <View style={styles.emojiGrid}>
                   {EMOJI_CHOICES.map(e => (
                     <TouchableOpacity
                       key={e}
-                      style={[styles.emojiBtn, emojiPickerCat && categories.find(c => c.id === emojiPickerCat)?.emoji === e && styles.emojiBtnActive]}
+                      style={[
+                        styles.emojiBtn,
+                        emojiPickerCat && categories.find(c => c.id === emojiPickerCat)?.emoji === e && styles.emojiBtnActive,
+                      ]}
                       onPress={() => emojiPickerCat && updateCategoryEmoji(emojiPickerCat, e)}
                     >
                       <Text style={styles.emojiText}>{e}</Text>
@@ -389,8 +407,49 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </Modal>
 
+          {/* Language */}
+          <Text style={styles.sectionLabel}>{t.settings.language.toUpperCase()}</Text>
+          <View style={styles.card}>
+            <TouchableOpacity style={styles.dataRow} onPress={() => setShowLanguagePicker(true)} activeOpacity={0.7}>
+              <View style={styles.dataIconWrap}>
+                <IconLanguage size={18} color={Colors.indigo} />
+              </View>
+              <View style={styles.dataTextWrap}>
+                <Text style={styles.dataLabel}>{t.settings.language}</Text>
+                <Text style={styles.dataSub}>{t.settings.languageSub}</Text>
+              </View>
+              <Text style={styles.langFlag}>{currentLangOption?.flag} {currentLangOption?.label}</Text>
+              <Text style={styles.dataArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Language picker modal */}
+          <Modal visible={showLanguagePicker} transparent animationType="slide" onRequestClose={() => setShowLanguagePicker(false)}>
+            <TouchableOpacity style={styles.emojiOverlay} onPress={() => setShowLanguagePicker(false)} activeOpacity={1}>
+              <View style={styles.langSheet}>
+                <Text style={styles.langSheetTitle}>{t.languagePicker.title}</Text>
+                <Text style={styles.langSheetSub}>{t.languagePicker.subtitle}</Text>
+                <View style={styles.langOptions}>
+                  {LANGUAGE_OPTIONS.map(opt => (
+                    <TouchableOpacity
+                      key={opt.code}
+                      style={[styles.langOption, language === opt.code && styles.langOptionActive]}
+                      onPress={() => { setLanguage(opt.code); setShowLanguagePicker(false); }}
+                    >
+                      <Text style={styles.langOptionFlag}>{opt.flag}</Text>
+                      <Text style={[styles.langOptionLabel, language === opt.code && styles.langOptionLabelActive]}>
+                        {opt.label}
+                      </Text>
+                      {language === opt.code && <Text style={styles.langCheck}>✓</Text>}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+
           {/* Data */}
-          <Text style={styles.sectionLabel}>DONNÉES</Text>
+          <Text style={styles.sectionLabel}>{t.settings.data.toUpperCase()}</Text>
           <View style={styles.card}>
             <TouchableOpacity style={styles.dataRow} onPress={handleExport} disabled={exporting} activeOpacity={0.7}>
               <View style={styles.dataIconWrap}>
@@ -400,8 +459,8 @@ export default function SettingsScreen() {
                 }
               </View>
               <View style={styles.dataTextWrap}>
-                <Text style={styles.dataLabel}>Exporter les données</Text>
-                <Text style={styles.dataSub}>Sauvegarder vers fichier JSON</Text>
+                <Text style={styles.dataLabel}>{t.settings.export}</Text>
+                <Text style={styles.dataSub}>{t.settings.exportSub}</Text>
               </View>
               <Text style={styles.dataArrow}>›</Text>
             </TouchableOpacity>
@@ -411,8 +470,8 @@ export default function SettingsScreen() {
                 <IconDownload size={18} color={Colors.green} />
               </View>
               <View style={styles.dataTextWrap}>
-                <Text style={styles.dataLabel}>Importer des données</Text>
-                <Text style={styles.dataSub}>Restaurer depuis un fichier JSON</Text>
+                <Text style={styles.dataLabel}>{t.settings.import}</Text>
+                <Text style={styles.dataSub}>{t.settings.importSub}</Text>
               </View>
               <Text style={styles.dataArrow}>›</Text>
             </TouchableOpacity>
@@ -422,8 +481,8 @@ export default function SettingsScreen() {
                 <IconTrash size={18} color={Colors.red} />
               </View>
               <View style={styles.dataTextWrap}>
-                <Text style={[styles.dataLabel, { color: Colors.red }]}>Réinitialiser l'app</Text>
-                <Text style={styles.dataSub}>Supprimer toutes les données</Text>
+                <Text style={[styles.dataLabel, { color: Colors.red }]}>{t.settings.reset}</Text>
+                <Text style={styles.dataSub}>{t.settings.resetSub}</Text>
               </View>
               <Text style={[styles.dataArrow, { color: Colors.red }]}>›</Text>
             </TouchableOpacity>
@@ -480,12 +539,17 @@ const styles = StyleSheet.create({
   catDelBtn: { padding: 8 },
   catDelText: { fontSize: 13, color: Colors.slate400 },
   emojiOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'center', alignItems: 'center',
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emojiSheet: {
-    backgroundColor: Colors.white, borderRadius: 16,
-    padding: 20, width: 280, gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 20,
+    width: 280,
+    gap: 12,
   },
   emojiSheetTitle: { fontSize: 15, fontWeight: '600', color: Colors.slate800, textAlign: 'center' },
   emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
@@ -507,4 +571,33 @@ const styles = StyleSheet.create({
   dataLabel: { fontSize: 14, color: Colors.slate800 },
   dataSub: { fontSize: 11, color: Colors.slate400, marginTop: 1 },
   dataArrow: { fontSize: 20, color: Colors.slate400, lineHeight: 22 },
+  langFlag: { fontSize: 13, color: Colors.slate600 },
+  langSheet: {
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 24,
+    width: 300,
+    gap: 16,
+  },
+  langSheetTitle: { fontSize: 17, fontWeight: '700', color: Colors.slate800, textAlign: 'center' },
+  langSheetSub: { fontSize: 13, color: Colors.slate400, textAlign: 'center', marginTop: -8 },
+  langOptions: { gap: 8 },
+  langOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: Colors.slate50,
+    gap: 12,
+  },
+  langOptionActive: {
+    backgroundColor: Colors.indigoLight,
+    borderWidth: 1.5,
+    borderColor: Colors.indigo,
+  },
+  langOptionFlag: { fontSize: 22 },
+  langOptionLabel: { flex: 1, fontSize: 15, fontWeight: '500', color: Colors.slate700 },
+  langOptionLabelActive: { color: Colors.indigo, fontWeight: '600' },
+  langCheck: { fontSize: 16, color: Colors.indigo, fontWeight: '700' },
 });

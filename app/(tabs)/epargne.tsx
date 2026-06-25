@@ -7,14 +7,16 @@ import { IconTarget } from '@tabler/icons-react-native';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
 import { GoalCard } from '../../components/GoalCard';
+import { useLanguage } from '../../context/LanguageContext';
 
-function formatMonthLabel(monthKey: string): string {
+function formatMonthLabel(monthKey: string, locale: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 export default function EpargneScreen() {
+  const { t, locale } = useLanguage();
   const { data, getCurrentMonthExpenses } = useApp();
   const router = useRouter();
 
@@ -22,13 +24,13 @@ export default function EpargneScreen() {
   const expenses = getCurrentMonthExpenses();
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const savedThisMonth = config ? config.income - totalSpent : 0;
-  const monthLabel = config ? formatMonthLabel(config.monthKey) : '';
+  const monthLabel = config ? formatMonthLabel(config.monthKey, locale) : '';
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Épargne</Text>
+          <Text style={styles.headerTitle}>{t.savings.title}</Text>
           <Text style={styles.headerSub}>{monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</Text>
         </View>
         <TouchableOpacity onPress={() => router.push('/modals/manage-goals' as any)} style={styles.iconBtn}>
@@ -40,43 +42,43 @@ export default function EpargneScreen() {
         {/* Cagnotte */}
         <View style={styles.cagnotteCard}>
           <Text style={styles.cagnotteAmount}>{data.freeSavings.toFixed(2)} €</Text>
-          <Text style={styles.cagnotteLabel}>Cagnotte disponible</Text>
-          <Text style={styles.cagnotteSub}>sur {data.totalSavings.toFixed(0)} € épargnés au total</Text>
+          <Text style={styles.cagnotteLabel}>{t.savings.availablePool}</Text>
+          <Text style={styles.cagnotteSub}>{t.savings.totalSaved.replace('{total}', data.totalSavings.toFixed(0))}</Text>
         </View>
 
         {/* Récap mensuel */}
         {config && (
           <View style={styles.recapCard}>
-            <Text style={styles.recapSectionLabel}>CE MOIS-CI</Text>
+            <Text style={styles.recapSectionLabel}>{t.savings.thisMonth}</Text>
             <View style={styles.recapRow}>
-              <Text style={styles.recapLabel}>Revenu</Text>
+              <Text style={styles.recapLabel}>{t.savings.income}</Text>
               <Text style={styles.recapValue}>{config.income.toFixed(0)} €</Text>
             </View>
             <View style={styles.recapRow}>
-              <Text style={styles.recapLabel}>Dépensé</Text>
+              <Text style={styles.recapLabel}>{t.savings.spent}</Text>
               <Text style={[styles.recapValue, { color: Colors.indigo }]}>{totalSpent.toFixed(0)} €</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.recapRow}>
-              <Text style={styles.recapLabel}>Épargné</Text>
+              <Text style={styles.recapLabel}>{t.savings.saved}</Text>
               <Text style={[styles.recapValue, { color: savedThisMonth >= 0 ? Colors.green : Colors.red }]}>
                 {savedThisMonth >= 0 ? '+' : ''}{savedThisMonth.toFixed(0)} €
               </Text>
             </View>
             <View style={styles.recapRow}>
-              <Text style={styles.recapLabel}>Objectif</Text>
+              <Text style={styles.recapLabel}>{t.savings.goal}</Text>
               <Text style={styles.recapValue}>{config.savingsGoal.toFixed(0)} €</Text>
             </View>
           </View>
         )}
 
         {/* Objectifs */}
-        <Text style={styles.sectionLabel}>OBJECTIFS</Text>
+        <Text style={styles.sectionLabel}>{t.savings.goals}</Text>
 
         {data.savingsGoals.length === 0 ? (
           <View style={styles.emptyGoals}>
             <Text style={styles.emptyEmoji}>🎯</Text>
-            <Text style={styles.emptyText}>Aucun objectif encore — crée-en un !</Text>
+            <Text style={styles.emptyText}>{t.savings.noGoals}</Text>
           </View>
         ) : (
           data.savingsGoals.map(goal => (
@@ -91,7 +93,7 @@ export default function EpargneScreen() {
 
         {/* Cagnotte libre */}
         <View style={styles.libreCard}>
-          <Text style={styles.libreLabel}>Cagnotte libre · Non affectée</Text>
+          <Text style={styles.libreLabel}>{t.savings.freePool} · {t.savings.freePoolSub}</Text>
           <Text style={styles.libreAmount}>{data.freeSavings.toFixed(0)} €</Text>
         </View>
 

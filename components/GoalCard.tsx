@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { ProgressBar } from './ProgressBar';
 import { SavingsGoal } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface GoalCardProps {
   goal: SavingsGoal;
@@ -10,6 +11,7 @@ interface GoalCardProps {
 }
 
 export function GoalCard({ goal, monthlyContribution, onAllocate }: GoalCardProps) {
+  const { t } = useLanguage();
   const percentage = goal.targetAmount > 0
     ? (goal.allocatedAmount / goal.targetAmount) * 100
     : 0;
@@ -44,18 +46,18 @@ export function GoalCard({ goal, monthlyContribution, onAllocate }: GoalCardProp
       <View style={styles.footer}>
         {!isComplete ? (
           <Text style={styles.estimate}>
-            {monthsLeft !== null ? `~${monthsLeft} mois` : '--'}
+            {monthsLeft !== null ? `~${monthsLeft} ${t.savings.monthsLeft}` : '--'}
           </Text>
         ) : (
           <View />
         )}
         {!isComplete ? (
           <TouchableOpacity style={styles.allocateBtn} onPress={onAllocate}>
-            <Text style={styles.allocateText}>Alimenter →</Text>
+            <Text style={styles.allocateText}>{t.savings.allocate}</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.completeBadge}>
-            <Text style={styles.completeText}>✓ Atteint</Text>
+            <Text style={styles.completeText}>{t.savings.goalComplete}</Text>
           </View>
         )}
       </View>

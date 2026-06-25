@@ -6,8 +6,10 @@ import { IconX, IconPlus, IconTrash } from '@tabler/icons-react-native';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
 import { ProgressBar } from '../../components/ProgressBar';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ManageGoalsModal() {
+  const { t } = useLanguage();
   const { data, deleteSavingsGoal } = useApp();
   const router = useRouter();
 
@@ -15,22 +17,22 @@ export default function ManageGoalsModal() {
     const goal = data.savingsGoals.find(g => g.id === goalId);
     if (!goal) return;
 
-    const message = `Les ${goal.allocatedAmount.toFixed(2)} € alloués à '${goal.name}' seront restitués à ta cagnotte libre.`;
+    const message = t.goalModal.deleteGoalMsg.replace('{amount}', goal.allocatedAmount.toFixed(2)).replace('{name}', goal.name);
 
     if (Platform.OS === 'web') {
-      if (window.confirm(`Supprimer cet objectif ?\n\n${message}`)) {
+      if (window.confirm(`${t.goalModal.deleteGoalConfirm}\n\n${message}`)) {
         deleteSavingsGoal(goalId);
       }
       return;
     }
 
     Alert.alert(
-      'Supprimer cet objectif ?',
+      t.goalModal.deleteGoalConfirm,
       message,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.settings.cancel, style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t.settings.reset,
           style: 'destructive',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -44,7 +46,7 @@ export default function ManageGoalsModal() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Gérer les objectifs</Text>
+        <Text style={styles.title}>{t.goalModal.manageTitle}</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
           <IconX size={20} color={Colors.slate600} />
         </TouchableOpacity>
@@ -54,7 +56,7 @@ export default function ManageGoalsModal() {
         {data.savingsGoals.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyEmoji}>🎯</Text>
-            <Text style={styles.emptyText}>Aucun objectif pour l'instant</Text>
+            <Text style={styles.emptyText}>{t.goalModal.manageEmpty}</Text>
           </View>
         ) : (
           data.savingsGoals.map(goal => {
@@ -96,7 +98,7 @@ export default function ManageGoalsModal() {
           activeOpacity={0.85}
         >
           <IconPlus size={18} color={Colors.white} />
-          <Text style={styles.newGoalText}>Nouvel objectif</Text>
+          <Text style={styles.newGoalText}>{t.savings.newGoal}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

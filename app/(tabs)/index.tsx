@@ -10,14 +10,16 @@ import { useApp } from '../../context/AppContext';
 import { CategoryCard } from '../../components/CategoryCard';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { IOSInstallInstructions } from '../../components/IOSInstallInstructions';
+import { useLanguage } from '../../context/LanguageContext';
 
-function formatMonthLabel(monthKey: string): string {
+function formatMonthLabel(monthKey: string, locale: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 export default function HomeScreen() {
+  const { t, locale } = useLanguage();
   const { data, isLoading, pendingGapMonths, clearPendingGapMonths, getCurrentMonthExpenses, getCategorySpent, checkMonthChange } = useApp();
   const router = useRouter();
   const rootNavState = useRootNavigationState();
@@ -53,7 +55,7 @@ export default function HomeScreen() {
   const expenses = getCurrentMonthExpenses();
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const solde = config.income - totalSpent;
-  const monthLabel = formatMonthLabel(config.monthKey);
+  const monthLabel = formatMonthLabel(config.monthKey, locale);
   const showGapBanner = pendingGapMonths > 0 && !gapDismissed;
 
   const dismissGap = () => {
@@ -66,7 +68,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>{monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</Text>
-          <Text style={styles.headerSub}>Vue d'ensemble</Text>
+          <Text style={styles.headerSub}>{t.home.title}</Text>
         </View>
         <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 6 }}>
           <IconSettings size={22} color={Colors.slate600} />
@@ -76,7 +78,7 @@ export default function HomeScreen() {
       {showGapBanner && (
         <View style={styles.gapBanner}>
           <Text style={styles.gapText}>
-            Tu n'as pas ouvert l'app depuis {pendingGapMonths} mois. Les mois manquants ont été archivés.
+            {t.home.gapBanner.replace('{months}', String(pendingGapMonths))}
           </Text>
           <TouchableOpacity onPress={dismissGap} style={{ padding: 2 }}>
             <IconX size={16} color={Colors.indigoDark} />
@@ -88,8 +90,8 @@ export default function HomeScreen() {
         <TouchableOpacity onPress={handleInstall} style={styles.installBanner} activeOpacity={0.8}>
           <IconDownload size={18} color={Colors.indigo} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.installTitle}>Installer Flo sur ton téléphone</Text>
-            <Text style={styles.installSub}>Accède à l'app depuis ton écran d'accueil</Text>
+            <Text style={styles.installTitle}>{t.home.installApp}</Text>
+            <Text style={styles.installSub}>{t.home.installAppSub}</Text>
           </View>
           <Text style={styles.installArrow}>→</Text>
         </TouchableOpacity>
@@ -98,23 +100,23 @@ export default function HomeScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.soldeCard}>
           <Text style={styles.soldeAmount}>{solde.toFixed(2)} €</Text>
-          <Text style={styles.soldeLabel}>Solde disponible restant</Text>
+          <Text style={styles.soldeLabel}>{t.home.remainingBalance}</Text>
         </View>
 
         <View style={styles.miniCards}>
           <View style={[styles.miniCard, { backgroundColor: Colors.indigoLight }]}>
-            <Text style={styles.miniLabel}>DÉPENSÉ</Text>
+            <Text style={styles.miniLabel}>{t.home.spent.toUpperCase()}</Text>
             <Text style={[styles.miniValue, { color: Colors.indigo }]}>{totalSpent.toFixed(0)} €</Text>
           </View>
           <View style={[styles.miniCard, { backgroundColor: Colors.greenLight }]}>
-            <Text style={styles.miniLabel}>ÉPARGNE VISÉE</Text>
+            <Text style={styles.miniLabel}>{t.home.savingsGoal.toUpperCase()}</Text>
             <Text style={[styles.miniValue, { color: Colors.green }]}>{config.savingsGoal.toFixed(0)} €</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>CATÉGORIES</Text>
+        <Text style={styles.sectionLabel}>{t.home.categories.toUpperCase()}</Text>
         {config.categories.length === 0 ? (
-          <Text style={styles.emptyText}>Aucune catégorie configurée</Text>
+          <Text style={styles.emptyText}>{t.expenses.noCategories}</Text>
         ) : (
           config.categories.map(cat => (
             <CategoryCard
@@ -135,7 +137,7 @@ export default function HomeScreen() {
           onPress={() => router.push('/modals/add-expense')}
           activeOpacity={0.85}
         >
-          <Text style={styles.fabText}>＋ Ajouter une dépense</Text>
+          <Text style={styles.fabText}>{t.home.addExpense}</Text>
         </TouchableOpacity>
       </View>
 

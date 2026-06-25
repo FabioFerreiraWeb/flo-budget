@@ -9,8 +9,10 @@ import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
 import { ProgressBar } from '../../components/ProgressBar';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function AllocateGoalModal() {
+  const { t } = useLanguage();
   const { data, allocateToGoal } = useApp();
   const router = useRouter();
   const { goalId } = useLocalSearchParams<{ goalId: string }>();
@@ -39,7 +41,7 @@ export default function AllocateGoalModal() {
         <View style={styles.handle} />
 
         <View style={styles.header}>
-          <Text style={styles.title}>Alimenter "{goal.name}" {goal.emoji}</Text>
+          <Text style={styles.title}>{t.goalModal.allocateTitle} "{goal.name}" {goal.emoji}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
             <Text style={styles.closeText}>✕</Text>
           </TouchableOpacity>
@@ -47,11 +49,11 @@ export default function AllocateGoalModal() {
 
         <View style={styles.content}>
           <View style={styles.cagnotteCard}>
-            <Text style={styles.cagnotteLabel}>Cagnotte disponible</Text>
+            <Text style={styles.cagnotteLabel}>{t.goalModal.availablePool}</Text>
             <Text style={styles.cagnotteAmount}>{data.freeSavings.toFixed(2)} €</Text>
           </View>
 
-          <Text style={styles.label}>Montant à affecter</Text>
+          <Text style={styles.label}>{t.goalModal.amountToAllocate}</Text>
           <View style={styles.amountRow}>
             <TextInput
               style={[styles.input, styles.amountInput, overMax && styles.inputError]}
@@ -65,17 +67,17 @@ export default function AllocateGoalModal() {
             <View style={styles.euroTag}><Text style={styles.euroText}>€</Text></View>
           </View>
 
-          <Text style={styles.disponible}>Disponible : {data.freeSavings.toFixed(2)} €</Text>
+          <Text style={styles.disponible}>{t.goalModal.available} : {data.freeSavings.toFixed(2)} €</Text>
 
           {overMax && (
             <Text style={styles.error}>
-              Montant maximum disponible : {data.freeSavings.toFixed(2)} €
+              {t.errors.allocationExceedsPool.replace('{amount}', data.freeSavings.toFixed(2))}
             </Text>
           )}
 
           {parsed > 0 && !overMax && (
             <View style={styles.previewCard}>
-              <Text style={styles.previewLabel}>Aperçu après affectation</Text>
+              <Text style={styles.previewLabel}>{t.goalModal.preview}</Text>
               <View style={styles.previewAmounts}>
                 <Text style={styles.previewValue}>{previewAllocated.toFixed(0)} €</Text>
                 <Text style={styles.previewSep}>/</Text>
@@ -85,7 +87,7 @@ export default function AllocateGoalModal() {
             </View>
           )}
 
-          <Text style={styles.note}>La somme sera déduite de ta cagnotte libre</Text>
+          <Text style={styles.note}>{t.goalModal.allocateNote}</Text>
         </View>
 
         <View style={styles.footer}>
@@ -95,7 +97,7 @@ export default function AllocateGoalModal() {
             disabled={!isValid}
             activeOpacity={0.85}
           >
-            <Text style={styles.saveBtnText}>Affecter à cet objectif</Text>
+            <Text style={styles.saveBtnText}>{t.goalModal.allocateBtn}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

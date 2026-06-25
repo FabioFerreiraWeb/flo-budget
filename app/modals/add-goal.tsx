@@ -8,10 +8,12 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const EMOJI_OPTIONS = ['🏠', '🚗', '✈️', '🛡️', '🎓', '📱', '🎸', '💍'];
 
 export default function AddGoalModal() {
+  const { t } = useLanguage();
   const { data, addSavingsGoal } = useApp();
   const router = useRouter();
 
@@ -26,7 +28,7 @@ export default function AddGoalModal() {
   const handleCreate = () => {
     const initialAmount = parseFloat(initial) || 0;
     if (initialAmount > maxInitial) {
-      Alert.alert('Montant insuffisant', `Ta cagnotte disponible est de ${maxInitial.toFixed(0)} €`);
+      Alert.alert(t.goalModal.insufficientFunds, t.goalModal.insufficientFundsMsg.replace('{amount}', maxInitial.toFixed(0)));
       return;
     }
     addSavingsGoal({ emoji, name: name.trim(), targetAmount: parseFloat(target) }, initialAmount);
@@ -40,14 +42,14 @@ export default function AddGoalModal() {
         <View style={styles.handle} />
 
         <View style={styles.header}>
-          <Text style={styles.title}>Nouvel objectif</Text>
+          <Text style={styles.title}>{t.goalModal.newGoalTitle}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
             <Text style={styles.closeText}>✕</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Icône</Text>
+          <Text style={styles.label}>{t.goalModal.icon}</Text>
           <View style={styles.emojiRow}>
             {EMOJI_OPTIONS.map(e => (
               <TouchableOpacity
@@ -60,7 +62,7 @@ export default function AddGoalModal() {
             ))}
           </View>
 
-          <Text style={styles.label}>Nom</Text>
+          <Text style={styles.label}>{t.goalModal.name}</Text>
           <TextInput
             style={styles.input}
             placeholder="Ex : Voiture"
@@ -70,7 +72,7 @@ export default function AddGoalModal() {
             autoFocus
           />
 
-          <Text style={styles.label}>Montant cible</Text>
+          <Text style={styles.label}>{t.goalModal.target}</Text>
           <View style={styles.amountRow}>
             <TextInput
               style={[styles.input, styles.amountInput]}
@@ -83,7 +85,7 @@ export default function AddGoalModal() {
             <View style={styles.euroTag}><Text style={styles.euroText}>€</Text></View>
           </View>
 
-          <Text style={styles.label}>Affectation initiale (optionnel)</Text>
+          <Text style={styles.label}>{t.goalModal.initialAllocation}</Text>
           <View style={styles.amountRow}>
             <TextInput
               style={[styles.input, styles.amountInput]}
@@ -95,7 +97,7 @@ export default function AddGoalModal() {
             />
             <View style={styles.euroTag}><Text style={styles.euroText}>€</Text></View>
           </View>
-          <Text style={styles.hint}>Cagnotte disponible : {maxInitial.toFixed(0)} €</Text>
+          <Text style={styles.hint}>{t.savings.availablePool} : {maxInitial.toFixed(0)} €</Text>
         </ScrollView>
 
         <View style={styles.footer}>
@@ -104,7 +106,7 @@ export default function AddGoalModal() {
             onPress={handleCreate}
             activeOpacity={0.85}
           >
-            <Text style={styles.saveBtnText}>Créer l'objectif</Text>
+            <Text style={styles.saveBtnText}>{t.goalModal.createBtn}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

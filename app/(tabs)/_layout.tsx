@@ -1,8 +1,10 @@
 import { Tabs } from 'expo-router';
 import { IconHome, IconCreditCard, IconCoin, IconClock } from '@tabler/icons-react-native';
 import { Colors } from '../../constants/Colors';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function TabLayout() {
+  const { t } = useLanguage();
   return (
     <Tabs
       screenOptions={{
@@ -40,28 +42,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Accueil',
+          title: t.tabs.home,
           tabBarIcon: ({ color, size }) => <IconHome color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="depenses"
         options={{
-          title: 'Dépenses',
+          title: t.tabs.expenses,
           tabBarIcon: ({ color, size }) => <IconCreditCard color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="epargne"
         options={{
-          title: 'Épargne',
+          title: t.tabs.savings,
           tabBarIcon: ({ color, size }) => <IconCoin color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="historique"
         options={{
-          title: 'Historique',
+          title: t.tabs.history,
           tabBarIcon: ({ color, size }) => <IconClock color={color} size={size} />,
         }}
       />

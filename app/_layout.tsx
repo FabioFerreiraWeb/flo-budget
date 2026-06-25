@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
 import 'react-native-reanimated';
 import { AppProvider } from '../context/AppContext';
+import { LanguageProvider } from '../context/LanguageContext';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -19,6 +20,7 @@ function AppStack() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="admin" options={{ headerShown: false }} />
       <Stack.Screen name="modals/add-expense" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="modals/add-goal" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="modals/allocate-goal" options={{ presentation: 'modal', headerShown: false }} />
@@ -52,31 +54,45 @@ export default function RootLayout() {
     }
   }, []);
 
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const script = document.createElement('script');
+      script.defer = true;
+      script.src = 'https://cloud.umami.is/script.js';
+      script.setAttribute('data-website-id', '5bc42d14-1272-40b2-8ea1-06053de233be');
+      document.head.appendChild(script);
+    }
+  }, []);
+
   if (Platform.OS === 'web') {
     return (
-      <AppProvider>
-        <Head>
-          <title>Flo — Gestion de budget</title>
-          <meta name="description" content="Gérez vos dépenses et atteignez vos objectifs d'épargne." />
-          <link rel="manifest" href="/manifest.json" />
-          <meta name="theme-color" content="#4F46E5" />
-          <link rel="apple-touch-icon" href="/icon.png" />
-          <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-          <meta name="apple-mobile-web-app-title" content="Flo" />
-        </Head>
-        <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#F8FAFC', overflow: 'visible' }}>
-          <View style={{ width: '100%', maxWidth: 390, flex: 1, overflow: 'visible' }}>
-            <AppStack />
+      <LanguageProvider>
+        <AppProvider>
+          <Head>
+            <title>Flo — Gestion de budget</title>
+            <meta name="description" content="Gérez vos dépenses et atteignez vos objectifs d'épargne." />
+            <link rel="manifest" href="/manifest.json" />
+            <meta name="theme-color" content="#4F46E5" />
+            <link rel="apple-touch-icon" href="/icon.png" />
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+            <meta name="apple-mobile-web-app-title" content="Flo" />
+          </Head>
+          <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#F8FAFC', overflow: 'visible' }}>
+            <View style={{ width: '100%', maxWidth: 390, flex: 1, overflow: 'visible' }}>
+              <AppStack />
+            </View>
           </View>
-        </View>
-      </AppProvider>
+        </AppProvider>
+      </LanguageProvider>
     );
   }
 
   return (
-    <AppProvider>
-      <AppStack />
-    </AppProvider>
+    <LanguageProvider>
+      <AppProvider>
+        <AppStack />
+      </AppProvider>
+    </LanguageProvider>
   );
 }

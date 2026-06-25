@@ -1,12 +1,15 @@
 import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { IconX, IconShare, IconPlus } from '@tabler/icons-react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Props {
   visible: boolean;
   onDismiss: () => void;
 }
 
-export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => (
+export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => {
+  const { t } = useLanguage();
+  return (
   <Modal
     visible={visible}
     transparent
@@ -37,7 +40,7 @@ export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => (
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
           <Text style={{ fontSize: 16, fontWeight: '500', color: '#1E293B' }}>
-            Installer Flo sur iPhone
+            {t.iosInstall.title}
           </Text>
           <TouchableOpacity onPress={onDismiss}>
             <IconX size={20} color="#94A3B8" />
@@ -58,10 +61,10 @@ export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => (
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, fontWeight: '500', color: '#1E293B' }}>
-                Ouvre cette page dans Safari
+                {t.iosInstall.step1}
               </Text>
               <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                L'installation ne fonctionne qu'avec Safari sur iPhone
+                {t.iosInstall.step1Sub}
               </Text>
             </View>
           </View>
@@ -78,12 +81,12 @@ export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => (
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontSize: 13, fontWeight: '500', color: '#1E293B' }}>
-                  Tape l'icône Partager
+                  {t.iosInstall.step2}
                 </Text>
                 <IconShare size={16} color="#4F46E5" />
               </View>
               <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                En bas de Safari, au centre de la barre d'outils
+                {t.iosInstall.step2Sub}
               </Text>
             </View>
           </View>
@@ -100,12 +103,12 @@ export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => (
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontSize: 13, fontWeight: '500', color: '#1E293B' }}>
-                  "Sur l'écran d'accueil"
+                  {t.iosInstall.step3}
                 </Text>
                 <IconPlus size={16} color="#4F46E5" />
               </View>
               <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                Fais défiler le menu et appuie sur cette option
+                {t.iosInstall.step3Sub}
               </Text>
             </View>
           </View>
@@ -121,10 +124,10 @@ export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => (
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, fontWeight: '500', color: '#1E293B' }}>
-                Appuie sur "Ajouter"
+                {t.iosInstall.step4}
               </Text>
               <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                Flo apparaîtra sur ton écran d'accueil comme une vraie app
+                {t.iosInstall.step4Sub}
               </Text>
             </View>
           </View>
@@ -143,11 +146,12 @@ export const IOSInstallInstructions = ({ visible, onDismiss }: Props) => (
           }}
         >
           <Text style={{ color: 'white', fontSize: 14, fontWeight: '500' }}>
-            J'ai compris
+            {t.iosInstall.understood}
           </Text>
         </TouchableOpacity>
 
       </View>
     </View>
   </Modal>
-);
+  );
+};

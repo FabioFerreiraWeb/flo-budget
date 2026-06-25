@@ -2,22 +2,24 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { MonthSummary } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MonthCardProps {
   summary: MonthSummary;
 }
 
-function formatMonthKey(monthKey: string): string {
+function formatMonthKey(monthKey: string, locale: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 export function MonthCard({ summary }: MonthCardProps) {
+  const { t, locale } = useLanguage();
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.monthName}>{formatMonthKey(summary.monthKey)}</Text>
+        <Text style={styles.monthName}>{formatMonthKey(summary.monthKey, locale)}</Text>
         <View style={[
           styles.badge,
           { backgroundColor: summary.isGoalReached ? Colors.greenLight : Colors.redLight }
@@ -26,26 +28,26 @@ export function MonthCard({ summary }: MonthCardProps) {
             styles.badgeText,
             { color: summary.isGoalReached ? Colors.green : Colors.red }
           ]}>
-            {summary.isGoalReached ? 'Objectif atteint' : 'Dépassement'}
+            {summary.isGoalReached ? t.history.goalReached : t.history.overspent}
           </Text>
         </View>
       </View>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statLabel}>BUDGET</Text>
+          <Text style={styles.statLabel}>{t.history.budget}</Text>
           <Text style={styles.statValue}>{summary.income.toFixed(0)} €</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
-          <Text style={styles.statLabel}>DÉPENSÉ</Text>
+          <Text style={styles.statLabel}>{t.history.spent}</Text>
           <Text style={[styles.statValue, { color: Colors.indigo }]}>
             {summary.totalSpent.toFixed(0)} €
           </Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
-          <Text style={styles.statLabel}>ÉPARGNÉ</Text>
+          <Text style={styles.statLabel}>{t.history.saved}</Text>
           <Text style={[styles.statValue, { color: summary.isGoalReached ? Colors.green : Colors.red }]}>
             {summary.totalSaved.toFixed(0)} €
           </Text>

@@ -5,11 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
+import { useLanguage } from '../../context/LanguageContext';
 
-function formatMonthLabel(monthKey: string): string {
+function formatMonthLabel(monthKey: string, locale: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 function getCurrentMonthKey(): string {
@@ -24,6 +25,7 @@ function computeGap(from: string, to: string): number {
 }
 
 export default function MonthRecapModal() {
+  const { t, locale } = useLanguage();
   const { data } = useApp();
   const router = useRouter();
 
@@ -36,18 +38,18 @@ export default function MonthRecapModal() {
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const totalSaved = config.income - totalSpent;
   const isGoalReached = totalSaved >= config.savingsGoal;
-  const monthLabel = formatMonthLabel(monthKey);
+  const monthLabel = formatMonthLabel(monthKey, locale);
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Bilan — {monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</Text>
+        <Text style={styles.title}>{t.monthReset.recapTitle} — {monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</Text>
       </View>
 
       {skippedMonths > 0 && (
         <View style={styles.gapBanner}>
           <Text style={styles.gapText}>
-            Tu n'as pas ouvert l'app depuis {skippedMonths + 1} mois. Les mois manquants seront archivés automatiquement.
+            {t.home.gapBanner.replace('{months}', String(skippedMonths + 1))}
           </Text>
         </View>
       )}
@@ -55,28 +57,28 @@ export default function MonthRecapModal() {
         {/* Finances */}
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Revenu</Text>
+            <Text style={styles.rowLabel}>{t.monthReset.income}</Text>
             <Text style={styles.rowValue}>{config.income.toFixed(0)} €</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Dépensé</Text>
+            <Text style={styles.rowLabel}>{t.monthReset.spent}</Text>
             <Text style={[styles.rowValue, { color: Colors.indigo }]}>{totalSpent.toFixed(0)} €</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Épargné</Text>
+            <Text style={styles.rowLabel}>{t.monthReset.saved}</Text>
             <Text style={[styles.rowValue, { color: totalSaved >= 0 ? Colors.green : Colors.red }]}>
               {totalSaved.toFixed(0)} €
             </Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Objectif était</Text>
+            <Text style={styles.rowLabel}>{t.monthReset.goalWas}</Text>
             <Text style={styles.rowValue}>{config.savingsGoal.toFixed(0)} €</Text>
           </View>
         </View>
 
         {/* Catégories */}
-        <Text style={styles.sectionLabel}>CATÉGORIES</Text>
+        <Text style={styles.sectionLabel}>{t.monthReset.categories}</Text>
         {config.categories.map(cat => {
           const spent = expenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0);
           const isOver = spent > cat.budget;
@@ -87,7 +89,7 @@ export default function MonthRecapModal() {
               <Text style={styles.catSpent}>{spent.toFixed(0)} € / {cat.budget.toFixed(0)} €</Text>
               <View style={[styles.catBadge, { backgroundColor: isOver ? Colors.redLight : Colors.greenLight }]}>
                 <Text style={[styles.catBadgeText, { color: isOver ? Colors.red : Colors.green }]}>
-                  {isOver ? 'Dépassé' : 'OK'}
+                  {isOver ? t.monthReset.catExceeded : t.monthReset.catOk}
                 </Text>
               </View>
             </View>
@@ -97,7 +99,7 @@ export default function MonthRecapModal() {
         {/* Banner résultat */}
         <View style={[styles.banner, { backgroundColor: isGoalReached ? Colors.greenLight : Colors.redLight }]}>
           <Text style={[styles.bannerText, { color: isGoalReached ? Colors.green : Colors.red }]}>
-            {isGoalReached ? '🎉 Objectif d\'épargne atteint !' : '📉 Objectif non atteint'}
+            {isGoalReached ? t.monthReset.goalReached : t.monthReset.goalNotReached}
           </Text>
         </View>
       </ScrollView>
@@ -108,7 +110,7 @@ export default function MonthRecapModal() {
           onPress={() => router.replace('/modals/new-month')}
           activeOpacity={0.85}
         >
-          <Text style={styles.nextBtnText}>Voir le mois suivant →</Text>
+          <Text style={styles.nextBtnText}>{t.monthReset.nextMonth}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

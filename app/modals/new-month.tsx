@@ -5,26 +5,28 @@ import { IconAdjustments } from '@tabler/icons-react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
+import { useLanguage } from '../../context/LanguageContext';
 
-function getNextMonthLabel(): string {
+function getNextMonthLabel(locale: string): string {
   const now = new Date();
   const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return next.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return next.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
-function getPrevMonthLabel(lastMonth: string): string {
+function getPrevMonthLabel(lastMonth: string, locale: string): string {
   const [year, month] = lastMonth.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long' });
+  return date.toLocaleDateString(locale, { month: 'long' });
 }
 
 export default function NewMonthModal() {
+  const { t, locale } = useLanguage();
   const { data, startNewMonth } = useApp();
   const router = useRouter();
 
-  const nextLabel = getNextMonthLabel();
+  const nextLabel = getNextMonthLabel(locale);
   const nextLabelCapital = nextLabel.charAt(0).toUpperCase() + nextLabel.slice(1);
-  const prevLabel = data.lastOpenedMonth ? getPrevMonthLabel(data.lastOpenedMonth) : 'avant';
+  const prevLabel = data.lastOpenedMonth ? getPrevMonthLabel(data.lastOpenedMonth, locale) : 'avant';
 
   const handleCarry = () => {
     startNewMonth('carry');
@@ -43,13 +45,13 @@ export default function NewMonthModal() {
       <View style={styles.sheet}>
         <View style={styles.handle} />
 
-        <Text style={styles.title}>Nouveau mois 🎊</Text>
-        <Text style={styles.sub}>{nextLabelCapital} — Comment démarrer ?</Text>
+        <Text style={styles.title}>{t.monthReset.newMonthTitle}</Text>
+        <Text style={styles.sub}>{nextLabelCapital} — {t.monthReset.newMonthSub}</Text>
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleCarry} activeOpacity={0.85}>
-          <Text style={styles.primaryBtnTitle}>⚡ Reconduire</Text>
+          <Text style={styles.primaryBtnTitle}>⚡ {t.monthReset.carry}</Text>
           <Text style={styles.primaryBtnSub}>
-            Mêmes réglages qu'en {prevLabel} · 2 secondes
+            {t.monthReset.carrySub.replace('{prevLabel}', prevLabel)}
           </Text>
         </TouchableOpacity>
 
@@ -62,12 +64,12 @@ export default function NewMonthModal() {
             <IconAdjustments size={16} color={Colors.indigo} />
           </View>
           <View style={styles.secondaryBtnText}>
-            <Text style={styles.secondaryBtnTitle}>Personnaliser</Text>
-            <Text style={styles.secondaryBtnSub}>Modifier revenu, objectifs ou catégories</Text>
+            <Text style={styles.secondaryBtnTitle}>{t.monthReset.customize}</Text>
+            <Text style={styles.secondaryBtnSub}>{t.monthReset.customizeSub}</Text>
           </View>
         </TouchableOpacity>
 
-        <Text style={styles.note}>Modifiable à tout moment dans Réglages</Text>
+        <Text style={styles.note}>{t.monthReset.settingsNote}</Text>
       </View>
     </SafeAreaView>
   );

@@ -9,16 +9,17 @@ import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants/Colors';
 import { useApp } from '../../context/AppContext';
 import { Category, MonthConfig } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 function getCurrentMonthKey(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function getMonthLabel(monthKey: string): string {
+function getMonthLabel(monthKey: string, locale: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 }
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -29,12 +30,13 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export default function CustomizeMonthModal() {
+  const { t, locale } = useLanguage();
   const { data, setMonthConfig, startNewMonth } = useApp();
   const router = useRouter();
 
   const isFirstLaunch = !data.currentMonthConfig;
   const monthKey = getCurrentMonthKey();
-  const monthLabel = getMonthLabel(monthKey);
+  const monthLabel = getMonthLabel(monthKey, locale);
 
   const prevConfig = data.currentMonthConfig;
   const prevSummary = data.monthSummaries[data.monthSummaries.length - 1];
@@ -47,11 +49,9 @@ export default function CustomizeMonthModal() {
 
   const incomeNum = parseFloat(income);
   const savingsNum = parseFloat(savingsGoal);
-  const incomeError = income !== '' && incomeNum <= 0
-    ? 'Le revenu doit être supérieur à 0 €'
-    : null;
+  const incomeError = income !== '' && incomeNum <= 0 ? t.errors.incomeRequired : null;
   const savingsError = income !== '' && savingsGoal !== '' && savingsNum >= incomeNum
-    ? "L'objectif d'épargne doit être inférieur au revenu mensuel."
+    ? t.errors.savingsExceedsIncome
     : null;
   const canSubmit = income !== '' && savingsGoal !== '' && !incomeError && !savingsError;
 
@@ -62,7 +62,7 @@ export default function CustomizeMonthModal() {
   const addCategory = () => {
     const newCat: Category = {
       id: Date.now().toString(),
-      name: 'Nouvelle catégorie',
+      name: t.onboarding.step3NewCategory,
       emoji: '📦',
       budget: 100,
     };
@@ -71,9 +71,9 @@ export default function CustomizeMonthModal() {
 
   const removeCategory = (id: string) => {
     if (categories.length <= 1) return;
-    Alert.alert('Supprimer', 'Supprimer cette catégorie ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => setCategories(cats => cats.filter(c => c.id !== id)) },
+    Alert.alert(t.settings.deleteCategoryConfirm, t.settings.deleteCategoryConfirm, [
+      { text: t.settings.cancel, style: 'cancel' },
+      { text: t.settings.reset, style: 'destructive', onPress: () => setCategories(cats => cats.filter(c => c.id !== id)) },
     ]);
   };
 
@@ -99,13 +99,13 @@ export default function CustomizeMonthModal() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Personnaliser {monthLabel}</Text>
-            <Text style={styles.sub}>Modifie ce qui a changé</Text>
+            <Text style={styles.title}>{t.monthReset.customizeTitle} {monthLabel}</Text>
+            <Text style={styles.sub}>{t.monthReset.customizeModify}</Text>
           </View>
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Revenu mensuel</Text>
+          <Text style={styles.label}>{t.settings.monthlyIncome}</Text>
           <View style={styles.amountRow}>
             <TextInput
               style={[styles.input, styles.amountInput, incomeError ? styles.inputErr : null]}
@@ -119,7 +119,7 @@ export default function CustomizeMonthModal() {
           </View>
           {incomeError && <Text style={styles.error}>{incomeError}</Text>}
 
-          <Text style={styles.label}>Objectif épargne</Text>
+          <Text style={styles.label}>{t.settings.savingsGoal}</Text>
           <View style={styles.amountRow}>
             <TextInput
               style={[styles.input, styles.amountInput, savingsError ? styles.inputErr : null]}
@@ -134,9 +134,9 @@ export default function CustomizeMonthModal() {
           {savingsError && <Text style={styles.error}>{savingsError}</Text>}
 
           <View style={styles.catsHeader}>
-            <Text style={styles.sectionLabel}>CATÉGORIES</Text>
+            <Text style={styles.sectionLabel}>{t.monthReset.categories}</Text>
             <TouchableOpacity onPress={addCategory} style={styles.addCatBtn}>
-              <Text style={styles.addCatText}>+ Ajouter</Text>
+              <Text style={styles.addCatText}>{t.settings.addCategory}</Text>
             </TouchableOpacity>
           </View>
 
@@ -169,7 +169,7 @@ export default function CustomizeMonthModal() {
                   <Text style={styles.delText}>✕</Text>
                 </TouchableOpacity>
                 {isOver && (
-                  <Text style={styles.warnText}>⚠ Dépassée le mois dernier</Text>
+                  <Text style={styles.warnText}>⚠ {t.monthReset.warningOverBudget.replace('{month}', prevSummary?.monthKey ?? '')}</Text>
                 )}
               </View>
             );
@@ -185,7 +185,7 @@ export default function CustomizeMonthModal() {
             disabled={!canSubmit}
             activeOpacity={0.85}
           >
-            <Text style={styles.saveBtnText}>Démarrer {monthLabel} →</Text>
+            <Text style={styles.saveBtnText}>{t.monthReset.startMonth.replace('{month}', monthLabel)}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
