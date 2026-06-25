@@ -73,7 +73,8 @@ export default function RootLayout() {
             <meta name="description" content="Gérez vos dépenses et atteignez vos objectifs d'épargne." />
             <link rel="manifest" href="/manifest.json" />
             <meta name="theme-color" content="#4F46E5" />
-            <link rel="apple-touch-icon" href="/icon.png" />
+            <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+            <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
             <meta name="apple-mobile-web-app-capable" content="yes" />
             <meta name="apple-mobile-web-app-status-bar-style" content="default" />
             <meta name="apple-mobile-web-app-title" content="Flo" />
